@@ -93,4 +93,13 @@ print("edge_features:\n", edge_features)
 # D_neighbors, E_idx = self._dist(Ca, mask)  # （这个E_idx用在了后面的rbf的计算）
 
 
-# 
+#
+def gather_nodes(nodes, neighbor_idx):
+  # nodes [B, N,C] # neighbor_idx  [B,N, K]
+  neighbors_flat = neighbor_idx.view((neighbor_idx.shape[0], -1))  # [B, N*K]
+  neighbors_flat = neighbors_flat.unsqueeze(-1).expand(-1, -1, nodes.size(2)) # [B, N*K, 1] -> [B, N*K, C]
+  # Gather and re-pack
+  neighbor_features = torch.gather(nodes, 1, neighbors_flat)  # [B, N+ N*K, C]
+  neighbor_features = neighbor_features.view(list(neighbor_idx.shape)[:3] + [-1])
+  return neighbor_features
+  
